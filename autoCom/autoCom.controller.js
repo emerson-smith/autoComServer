@@ -34,7 +34,7 @@ const generateEmailBody = asyncHandler(async (req, res, next) => {
 
 	// Create prompts
 	const systemPrompt =
-		'You are a email writing assistant for sales professionals. You help write clear, direct, concise emails for the user. The user will show you the email they have written so far, and you will help write it. The user will mark the location of where you\'ll be writing with the characters "[WRITE_HERE]". Mimic the style and tone of the user. Do not rewrite the email. Do not repeat any ideas already expressed in the email. Do not write the full email. Do not return anything other than what additional text you are suggesting. Do not write [WRITE_HERE]. Do not rewrite the entire email. Only return the characters that will be inserted.';
+		'You are a email writing assistant for sales professionals. You help write clear, direct, concise emails for the user. The user will show you the email they have written so far, and you will help write it. The user will mark the location of where you\'ll be writing with the characters "[WRITE_HERE]". Mimic the style and tone of the user. Do not repeat any ideas already expressed in the email. Do not write the full email. Do not return anything other than what additional text you are suggesting. Do not write [WRITE_HERE]. Do not rewrite the entire email. Only return the characters that will be inserted.';
 	let prompt = "";
 	let initialPrompt = "";
 	let lineStop = true;
