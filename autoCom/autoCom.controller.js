@@ -48,7 +48,12 @@ const generateEmailBody = asyncHandler(async (req, res, next) => {
 		initialPrompt = `continue writing at the location of the [WRITE_HERE] marker. Your response will be replacing the [WRITE_HERE] marker, so do not respond with it. \n\nHere is the email:\n---\n`;
 		lineStop = true;
 	}
-	prompt = initialPrompt + formData.bodyBefore + "[WRITE_HERE]" + formData.bodyAfter + "\n---\n";
+
+	if (formData.additionalContext) {
+		prompt += "Here is additional context about me:\n" + formData.additionalContext + "\n\n";
+	}
+
+	prompt += initialPrompt + formData.bodyBefore + "[WRITE_HERE]" + formData.bodyAfter + "\n---\n";
 
 	let completionConfig = {
 		model: "gpt-3.5-turbo",
