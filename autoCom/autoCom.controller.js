@@ -39,13 +39,13 @@ const generateEmailBody = asyncHandler(async (req, res, next) => {
 	let initialPrompt = "";
 	let lineStop = true;
 	if (formData.typeOfCompletion === "paragraph" && formData.bodyAfter.length < 6) {
-		initialPrompt = `Finish this email, starting at the [WRITE_HERE] tag. \n\nHere is the email:\n---\n`;
+		initialPrompt = `In this email, check if the [WRITE_HERE] tag is after a closing or sign-off. If yes, write "DONE". If no, finish this email starting at the [WRITE_HERE] tag. \n\nHere is the email:\n---\n`;
 		lineStop = false;
 	} else if (formData.typeOfCompletion === "paragraph" && formData.bodyAfter.length > 6) {
-		initialPrompt = `In this email, write a short paragraph that will be inserted into the email at the [WRITE_HERE] tag. Only write 1 paragraph. Your response will be replacing the [WRITE_HERE] marker, so do not respond with it. \n\nHere is the email:\n---\n`;
+		initialPrompt = `In this email, check if the [WRITE_HERE] tag is after a closing or sign-off. If yes, write "DONE". If no, write a short paragraph that will be inserted into the email at the [WRITE_HERE] tag. Only write 1 paragraph. Your response will be replacing the [WRITE_HERE] marker, so do not respond with it. \n\nHere is the email:\n---\n`;
 		lineStop = false;
 	} else if (formData.typeOfCompletion === "line") {
-		initialPrompt = `In this email, continue writing at the location of the [WRITE_HERE] marker. Your response will be replacing the [WRITE_HERE] marker, so do not respond with it. \n\nHere is the email:\n---\n`;
+		initialPrompt = `In this email, check if the [WRITE_HERE] tag is after a closing or sign-off. If yes, write "DONE". If no, continue writing at the location of the [WRITE_HERE] marker. Your response will be replacing the [WRITE_HERE] marker, so do not respond with it. \n\nHere is the email:\n---\n`;
 		lineStop = true;
 	}
 	prompt = initialPrompt + formData.bodyBefore + "[WRITE_HERE]" + formData.bodyAfter;
