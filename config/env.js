@@ -1,5 +1,5 @@
 const dotenv = require("dotenv").config();
-const envVariables = ["NODE_ENV", "PORT", "OPENAI_API_KEY"];
+const envVariables = ["NODE_ENV", "PORT", "OPENAI_API_KEY", "CONSOLE_LOG_LEVEL"];
 
 const checkEnvVariable = (variable) => {
 	if (!process.env[variable]) {

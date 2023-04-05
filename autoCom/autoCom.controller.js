@@ -10,7 +10,7 @@ const configuration = new Configuration({
 // @route   POST /api/autoCom/generateEmailBody
 // @access  Private
 const generateEmailBody = asyncHandler(async (req, res, next) => {
-	// console.log(req.body);
+	if (env.CONSOLE_LOG_LEVEL === "debug") console.log(req.body);
 	// check for form data in request
 	const formData = req.body;
 	if (!formData) {
@@ -102,7 +102,7 @@ const generateEmailBody = asyncHandler(async (req, res, next) => {
 	let suggested_text = response.data.choices[0].message.content;
 	suggested_text = suggested_text.replace(/\[WRITE_HERE\]/g, "");
 
-	// console.log(suggested_text);
+	if (env.CONSOLE_LOG_LEVEL === "debug") console.log(suggested_text);
 
 	res.status(201).json({ suggested_text });
 });
