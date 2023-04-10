@@ -118,6 +118,7 @@ const webhook = asyncHandler(async (req, res) => {
 			console.log(`Subscription status is ${status}.`);
 			// Then define and call a method to handle the subscription created.
 			// handleSubscriptionCreated(subscription);
+			handleSubscriptionUpdated(subscription);
 			break;
 		case "customer.subscription.updated":
 			subscription = event.data.object;
