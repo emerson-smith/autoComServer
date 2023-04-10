@@ -7,7 +7,7 @@ const validatePaidUser = async (req, res, next) => {
 		customer: customerId,
 	});
 	const subscription = subscriptions.data[0];
-	if (subscription.status === "active") {
+	if (subscription.status === "active" || subscription.status === "trialing") {
 		next();
 	} else {
 		res.status(402).json({ message: "Payment required" });
