@@ -19,6 +19,7 @@ const createCheckoutSession = asyncHandler(async (req, res) => {
 		lookup_keys: [req.body.lookup_key],
 		expand: ["data.product"],
 	});
+	console.log(prices);
 	const config = {
 		billing_address_collection: "auto",
 		line_items: [
