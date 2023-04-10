@@ -15,16 +15,16 @@ const createCheckoutSession = asyncHandler(async (req, res) => {
 		throw new Error("Email is required");
 	}
 
-	const prices = await stripe.prices.list({
-		lookup_keys: [req.body.lookup_key],
-		expand: ["data.product"],
-	});
-	console.log(prices);
+	// const prices = await stripe.prices.list({
+	// 	lookup_keys: [req.body.lookup_key],
+	// 	expand: ["data.product"],
+	// });
+	// console.log(prices);
 	const config = {
 		billing_address_collection: "auto",
 		line_items: [
 			{
-				price: prices.data[0].id,
+				price: env.STRIPE_PRICE_ID,
 				// For metered billing, do not pass quantity
 				quantity: 1,
 			},

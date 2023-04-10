@@ -12,6 +12,7 @@ const envVariables = [
 	"SERVER_URL",
 	"STRIPE_SECRET_KEY",
 	"STRIPE_WH_SECRET",
+	"STRIPE_PRICE_ID",
 ];
 
 const checkEnvVariable = (variable) => {
