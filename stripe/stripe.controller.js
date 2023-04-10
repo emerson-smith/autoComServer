@@ -35,6 +35,8 @@ const createCheckoutSession = asyncHandler(async (req, res) => {
 		subscription_data: {
 			trial_period_days: 7,
 		},
+		automatic_tax: { enabled: true },
+		allow_promotion_codes: true,
 	};
 	if (!req.body.customerId) {
 		config.customer_email = req.body.email;
