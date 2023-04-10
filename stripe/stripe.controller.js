@@ -71,9 +71,8 @@ const webhook = asyncHandler(async (req, res) => {
 	// Only verify the event if you have an endpoint secret defined.
 	// Otherwise use the basic event deserialized with JSON.parse
 	const sig = req.headers["stripe-signature"];
-	console.log(req.headers);
 	// console.log("req.body", req.body);
-	const payloadString = JSON.stringify(req.body, null, 2);
+	// const payloadString = JSON.stringify(req.body, null, 2);
 	// const header = stripe.webhooks.generateTestHeaderString({
 	// 	payload: payloadString,
 	// 	secret: endpointSecret,
@@ -83,7 +82,7 @@ const webhook = asyncHandler(async (req, res) => {
 	let event;
 
 	try {
-		event = stripe.webhooks.constructEvent(payloadString, sig, endpointSecret);
+		event = stripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
 	} catch (err) {
 		console.log(`⚠️  Webhook signature verification failed.`, err.message);
 		res.status(400).send(`Webhook Error: ${err.message}`);

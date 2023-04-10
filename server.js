@@ -10,7 +10,13 @@ const { notFoundHandler } = require("./middleware/notFound.middleware");
 const app = express();
 const apiRouter = express.Router();
 
-app.use(express.json());
+app.use(
+	express.json({
+		verify: (req, res, buf) => {
+			req.rawBody = buf;
+		},
+	})
+);
 app.use(express.urlencoded({ extended: true }));
 
 // Enable CORS, allowing all origins
