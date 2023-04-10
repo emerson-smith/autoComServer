@@ -32,6 +32,9 @@ const createCheckoutSession = asyncHandler(async (req, res) => {
 		mode: "subscription",
 		success_url: `${env.SERVER_URL}/api/stripe/redirect?success=true&session_id={CHECKOUT_SESSION_ID}`,
 		cancel_url: `${env.SERVER_URL}/api/stripe/redirect?canceled=true`,
+		subscription_data: {
+			trial_period_days: 7,
+		},
 	};
 	if (!req.body.customerId) {
 		config.customer_email = req.body.email;
