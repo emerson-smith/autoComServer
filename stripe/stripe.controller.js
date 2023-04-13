@@ -37,11 +37,6 @@ const createCheckoutSession = asyncHandler(async (req, res) => {
 		},
 		automatic_tax: { enabled: true },
 		allow_promotion_codes: true,
-		trial_settings: {
-			end_behavior: {
-				missing_payment_method: "create_invoice",
-			},
-		},
 	};
 	if (!req.body.customerId) {
 		config.customer_email = req.body.email;
