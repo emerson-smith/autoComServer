@@ -34,6 +34,11 @@ const createCheckoutSession = asyncHandler(async (req, res) => {
 		cancel_url: `${env.SERVER_URL}/api/stripe/redirect?canceled=true`,
 		subscription_data: {
 			trial_period_days: 7,
+			trial_settings: {
+				end_behavior: {
+					missing_payment_method: "create_invoice",
+				},
+			},
 		},
 		automatic_tax: { enabled: true },
 		allow_promotion_codes: true,
