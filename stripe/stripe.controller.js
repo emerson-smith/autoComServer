@@ -36,7 +36,7 @@ const createCheckoutSession = asyncHandler(async (req, res) => {
 			trial_period_days: 7,
 			trial_settings: {
 				end_behavior: {
-					missing_payment_method: "create_invoice",
+					missing_payment_method: "pause",
 				},
 			},
 		},
