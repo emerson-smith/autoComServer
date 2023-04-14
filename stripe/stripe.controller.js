@@ -41,7 +41,7 @@ const createCheckoutSession = asyncHandler(async (req, res) => {
 			},
 		},
 		payment_method_collection: "if_required",
-		automatic_tax: { enabled: true },
+		// automatic_tax: { enabled: true },
 		allow_promotion_codes: true,
 	};
 	if (!req.body.customerId) {
