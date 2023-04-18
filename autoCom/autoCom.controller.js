@@ -107,6 +107,151 @@ const generateEmailBody = asyncHandler(async (req, res, next) => {
 	res.status(201).json({ suggested_text });
 });
 
+// @desc   Generate Message Suggestion
+// @route  POST /api/autoCom/generateSuggestion
+// @access Private
+const generateSuggestion = asyncHandler(async (req, res, next) => {
+	if (env.CONSOLE_LOG_LEVEL === "debug") console.log(req.body);
+
+	// check for form data in request
+	// Required: messageType, completionType, messageBody, cursorPosition
+	// Optional: replyContext, additionalContext
+	const formData = req.body;
+	if (!formData) {
+		res.status(400).json({ error: "Missing form data." });
+		throw new Error("Missing prompt.");
+	}
+	if (!formData.completionType) {
+		res.status(400).json({ error: "Missing type of completion." });
+		throw new Error("Missing type of completion.");
+	}
+	if (!formData.messageType) {
+		res.status(400).json({ error: "Missing message type." });
+		throw new Error("Missing message type.");
+	}
+	if (!formData.messageBody) {
+		res.status(400).json({ error: "Missing message body." });
+		throw new Error("Missing message body.");
+	}
+	if (!formData.cursorPosition) {
+		res.status(400).json({ error: "Missing cursor position." });
+		throw new Error("Missing cursor position.");
+	}
+	const messageBody = formData.messageBody.content;
+	const lineIndex = formData.cursorPosition.lineIndex;
+	const characterIndex = formData.cursorPosition.characterIndex;
+
+	// split up the message body into before and after the cursor position
+	let messageBodyBefore = "";
+	let currentLine = "";
+	let messageBodyAfter = "";
+	if (formData.completionType === "line") {
+		messageBodyBefore = messageBody.split("\n").slice(0, lineIndex).join("\n");
+		currentLine = messageBody.split("\n")[lineIndex];
+		messageBodyAfter = messageBody
+			.split("\n")
+			.slice(lineIndex + 1)
+			.join("\n");
+	} else if (formData.completionType === "paragraph") {
+		messageBodyBefore = messageBody
+			.split("\n")
+			.slice(0, lineIndex + 1)
+			.join("\n");
+		currentLine = messageBody.split("\n")[lineIndex];
+		messageBodyBefore = messageBodyBefore.slice(0, messageBodyBefore.length - currentLine.length);
+		messageBodyAfter = messageBody
+			.split("\n")
+			.slice(lineIndex + 1)
+			.join("\n");
+	} else if (formData.completionType === "entire") {
+		messageBodyBefore = messageBody;
+	}
+
+	// Create Open AI API instance
+	const openai = new OpenAIApi(configuration);
+
+	// Create prompts
+	const systemPrompt =
+		"You are a email writing assistant. You help write clear, direct, concise, and professional emails for the user. The user will show you the email they have written so far, and you will help write it. Mimic the style and tone of the user. Do not repeat any ideas already expressed in the email.";
+	let userPrompt = "";
+
+	if (formData.additionalContext) {
+		userPrompt += "ADDITIONAL CONTEXT ABOUT ME:\n" + formData.additionalContext + "\n\n";
+	}
+
+	if (formData.replyContext) {
+		if (formData.replyContext.latestMessageBody && formData.replyContext.latestMessageBody.length > 0) {
+			if (formData.replyContext.latestMessageSender && formData.replyContext.latestMessageSender.length > 0) {
+				userPrompt += "MOST RECENT EMAIL:\nSENDER:" + formData.replyContext.latestMessageSender + "\n";
+			} else {
+				userPrompt += "MOST RECENT EMAIL:\n";
+			}
+			userPrompt += formData.replyContext.latestMessageBody + "\n\n";
+		}
+		if (formData.replyContext.latestMessageQuote && formData.replyContext.latestMessageQuote.length > 0) {
+			userPrompt += "PREVIOUS EMAILS:" + formData.replyContext.latestMessageQuote + "\n\n";
+		}
+	}
+
+	if (formData.completionType === "entire") {
+		userPrompt += `INSTRUCTIONS:\nHelp me finish writing the following email, return only a suggestion that fits at the end of the message. JSON ONLY\n\n{"messageBeforeSuggestion": "`;
+		userPrompt += messageBodyBefore;
+		userPrompt += `"}\n\n`;
+	} else if (formData.completionType === "paragraph") {
+		userPrompt += `INSTRUCTIONS:\nHelp me write the following email, return only a suggestion that fits in between the rest of the message. JSON ONLY\n\n{"messageBeforeSuggestion": "`;
+		userPrompt += messageBodyBefore;
+		userPrompt += `",\n"messageAfterSuggestion": "`;
+		userPrompt += messageBodyAfter;
+		userPrompt += `"}\n\n`;
+	} else if (formData.completionType === "line") {
+		userPrompt += `INSTRUCTIONS:\nHelp me write this line in the following email, return only a suggestion that fits in between the rest of the message. JSON ONLY\n\n{"messageBeforeSuggestion": "`;
+		userPrompt += messageBodyBefore;
+		userPrompt += `",\n"currentLine": "`;
+		userPrompt += currentLine;
+		userPrompt += `",\n"messageAfterSuggestion": "`;
+		userPrompt += messageBodyAfter;
+		userPrompt += `"}\n\n`;
+	}
+
+	userPrompt += `{"suggestion":"`;
+
+	let completionConfig = {
+		model: "gpt-3.5-turbo",
+		messages: [
+			{
+				role: "system",
+				content: systemPrompt,
+			},
+			{
+				role: "user",
+				content: userPrompt,
+			},
+		],
+		temperature: 0.6,
+		frequency_penalty: 0,
+		presence_penalty: 0,
+		stop: ["}"],
+	};
+
+	// console.log(completionConfig);
+	// Create completion
+	const response = await openai.createChatCompletion(completionConfig);
+
+	let responseText = response.data.choices[0].message.content;
+
+	// if last two charactes are "} then remove them
+	if (responseText.slice(-2) === `"}`) {
+		responseText = responseText.slice(0, -2);
+	} else if (responseText.slice(-1) === `"`) {
+		responseText = responseText.slice(0, -1);
+	}
+
+	if (env.CONSOLE_LOG_LEVEL === "debug") console.log(responseText);
+
+	res.status(201).json({ responseText });
+});
+
 module.exports = {
 	generateEmailBody,
+	generateSuggestion,
 };
