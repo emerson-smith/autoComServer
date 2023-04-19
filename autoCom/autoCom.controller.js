@@ -167,19 +167,23 @@ const generateSuggestion = asyncHandler(async (req, res, next) => {
 		messageBodyBefore = messageBody;
 	}
 
+	let typeOfText = "email";
+	if (formData.messageType === "linkedin") {
+		typeOfText = "linkedin message";
+	}
+
 	// Create Open AI API instance
 	const openai = new OpenAIApi(configuration);
 
 	// Create prompts
-	const systemPrompt =
-		"You are a email writing assistant. You help write clear, direct, concise, and professional emails for the user. The user will show you the email they have written so far, and you will help write it. Mimic the style and tone of the user. Do not repeat any ideas already expressed in the email.";
+	const systemPrompt = `You are a ${typeOfText} writing assistant. You help write clear, direct, concise, and professional ${typeOfText} for the user. The user will show you the ${typeOfText} they have written so far, and you will help write it. Mimic the style and tone of the user. Do not repeat any ideas already expressed in the ${typeOfText}.`;
 	let userPrompt = "";
 
 	if (formData.additionalContext) {
 		userPrompt += "ADDITIONAL CONTEXT ABOUT ME:\n" + formData.additionalContext + "\n\n";
 	}
 
-	if (formData.replyContext) {
+	if (formData.replyContext && formData.messageType === "gmail") {
 		if (formData.replyContext.latestMessageBody && formData.replyContext.latestMessageBody.length > 0) {
 			if (formData.replyContext.latestMessageSender && formData.replyContext.latestMessageSender.length > 0) {
 				userPrompt += "MOST RECENT EMAIL:\nSENDER:" + formData.replyContext.latestMessageSender + "\n";
@@ -189,22 +193,27 @@ const generateSuggestion = asyncHandler(async (req, res, next) => {
 			userPrompt += formData.replyContext.latestMessageBody + "\n\n";
 		}
 		if (formData.replyContext.latestMessageQuote && formData.replyContext.latestMessageQuote.length > 0) {
-			userPrompt += "PREVIOUS EMAILS:" + formData.replyContext.latestMessageQuote + "\n\n";
+			userPrompt += "PREVIOUS EMAILS, NEWEST AT THE TOP:" + formData.replyContext.latestMessageQuote + "\n\n";
+		}
+	} else if (formData.replyContext && formData.messageType === "linkedin") {
+		if (formData.replyContext.previousMessages && formData.replyContext.previousMessages.length > 0) {
+			userPrompt += "PREVIOUS LINKEDIN MESSAGES, OLDEST AT THE TOP:\n";
+			userPrompt += formData.replyContext.previousMessages + "\n\n";
 		}
 	}
 
 	if (formData.completionType === "entire") {
-		userPrompt += `INSTRUCTIONS:\nHelp me finish writing the following email, return only a suggestion that fits at the end of the message. JSON ONLY\n\n{"messageBeforeSuggestion": "`;
+		userPrompt += `INSTRUCTIONS:\nHelp me finish writing the following ${typeOfText}, return only a suggestion that fits at the end of the message. JSON ONLY\n\n{"messageBeforeSuggestion": "`;
 		userPrompt += messageBodyBefore;
 		userPrompt += `"}\n\n`;
 	} else if (formData.completionType === "paragraph") {
-		userPrompt += `INSTRUCTIONS:\nHelp me write the following email, return only a suggestion that fits in between the rest of the message. JSON ONLY\n\n{"messageBeforeSuggestion": "`;
+		userPrompt += `INSTRUCTIONS:\nHelp me write the following ${typeOfText}, return only a suggestion that fits in between the rest of the message. JSON ONLY\n\n{"messageBeforeSuggestion": "`;
 		userPrompt += messageBodyBefore;
 		userPrompt += `",\n"messageAfterSuggestion": "`;
 		userPrompt += messageBodyAfter;
 		userPrompt += `"}\n\n`;
 	} else if (formData.completionType === "line") {
-		userPrompt += `INSTRUCTIONS:\nHelp me write this line in the following email, return only a suggestion that fits in between the rest of the message. JSON ONLY\n\n{"messageBeforeSuggestion": "`;
+		userPrompt += `INSTRUCTIONS:\nHelp me write this line in the following ${typeOfText}, return only a suggestion that fits in between the rest of the message. JSON ONLY\n\n{"messageBeforeSuggestion": "`;
 		userPrompt += messageBodyBefore;
 		userPrompt += `",\n"currentLine": "`;
 		userPrompt += currentLine;
