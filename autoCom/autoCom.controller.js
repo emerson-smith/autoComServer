@@ -176,7 +176,7 @@ const generateSuggestion = asyncHandler(async (req, res, next) => {
 	const openai = new OpenAIApi(configuration);
 
 	// Create prompts
-	const systemPrompt = `You are a ${typeOfText} writing assistant. You help write clear, direct, concise, and professional ${typeOfText} for the user. The user will show you the ${typeOfText} they have written so far, and you will help write it. Mimic the style and tone of the user. Do not repeat any ideas already expressed in the ${typeOfText}.`;
+	const systemPrompt = `You are are AutoCompleteGPT, a ${typeOfText} writing assistant. You help write clear, direct, concise, and professional ${typeOfText}s for the user. The user will show you the ${typeOfText} they have written so far, and you will help write it. Mimic the style and tone of the user. Do not repeat any ideas already expressed in the ${typeOfText}.`;
 	let userPrompt = "";
 
 	if (formData.additionalContext) {
@@ -186,14 +186,14 @@ const generateSuggestion = asyncHandler(async (req, res, next) => {
 	if (formData.replyContext && formData.messageType === "gmail") {
 		if (formData.replyContext.latestMessageBody && formData.replyContext.latestMessageBody.length > 0) {
 			if (formData.replyContext.latestMessageSender && formData.replyContext.latestMessageSender.length > 0) {
-				userPrompt += "MOST RECENT EMAIL:\nSENDER:" + formData.replyContext.latestMessageSender + "\n";
+				userPrompt += "MOST RECENT EMAIL:\nSENDER: " + formData.replyContext.latestMessageSender + "\n";
 			} else {
 				userPrompt += "MOST RECENT EMAIL:\n";
 			}
-			userPrompt += formData.replyContext.latestMessageBody + "\n\n";
+			userPrompt += "EMAIL BODY:\n" + formData.replyContext.latestMessageBody + "\n\n";
 		}
 		if (formData.replyContext.latestMessageQuote && formData.replyContext.latestMessageQuote.length > 0) {
-			userPrompt += "PREVIOUS EMAILS, NEWEST AT THE TOP:" + formData.replyContext.latestMessageQuote + "\n\n";
+			userPrompt += "PREVIOUS EMAILS, NEWEST AT THE TOP:\n" + formData.replyContext.latestMessageQuote + "\n\n";
 		}
 	} else if (formData.replyContext && formData.messageType === "linkedin") {
 		if (formData.replyContext.previousMessages && formData.replyContext.previousMessages.length > 0) {
@@ -203,26 +203,29 @@ const generateSuggestion = asyncHandler(async (req, res, next) => {
 	}
 
 	if (formData.completionType === "entire") {
-		userPrompt += `INSTRUCTIONS:\nHelp me finish writing the following ${typeOfText}, return only a suggestion that fits at the end of the message. JSON ONLY\n\n{"messageBeforeSuggestion": "`;
+		userPrompt += `---\nAUTOCOMPLETEGPT'S INSTRUCTIONS:\nHelp me finish writing the following ${typeOfText}, return only a suggestion that fits at the end of the message.\n\nEMAIL BODY FROM ME:\nBEFORE SUGGESTION: "`;
 		userPrompt += messageBodyBefore;
-		userPrompt += `"}\n\n`;
+		userPrompt += `"\n\n`;
+		userPrompt += `AUTOCOMPLETEGPT'S SUGGESTED TEXT TO ADD:\n`;
 	} else if (formData.completionType === "paragraph") {
-		userPrompt += `INSTRUCTIONS:\nHelp me write the following ${typeOfText}, return only a suggestion that fits in between the rest of the message. JSON ONLY\n\n{"messageBeforeSuggestion": "`;
+		userPrompt += `---\nAUTOCOMPLETEGPT'S INSTRUCTIONS:\nHelp me write the following ${typeOfText}, return only a suggestion that fits in between the rest of the message.\n\nEMAIL BODY FROM ME:\nBEFORE SUGGESTION: "`;
 		userPrompt += messageBodyBefore;
-		userPrompt += `",\n"messageAfterSuggestion": "`;
+		userPrompt += `"\nAFTER SUGGESTION: "`;
 		userPrompt += messageBodyAfter;
-		userPrompt += `"}\n\n`;
+		userPrompt += `"\n\n`;
+		userPrompt += `AUTOCOMPLETEGPT'S SUGGESTED PARAGRAPH TO ADD IN BETWEEN:\n`;
 	} else if (formData.completionType === "line") {
-		userPrompt += `INSTRUCTIONS:\nHelp me write this line in the following ${typeOfText}, return only a suggestion that fits in between the rest of the message. JSON ONLY\n\n{"messageBeforeSuggestion": "`;
+		userPrompt += `---\nAUTOCOMPLETEGPT'S INSTRUCTIONS:\nHelp me write this line in the following ${typeOfText}, return only a suggestion that fits in between the rest of the message.\n\nEMAIL BODY FROM ME:\nBEFORE SUGGESTION: "`;
 		userPrompt += messageBodyBefore;
-		userPrompt += `",\n"currentLine": "`;
+		userPrompt += `"\nCURRENT LINE: "`;
 		userPrompt += currentLine;
-		userPrompt += `",\n"messageAfterSuggestion": "`;
+		userPrompt += `"\nAFTER SUGGESTION: "`;
 		userPrompt += messageBodyAfter;
-		userPrompt += `"}\n\n`;
+		userPrompt += `"\n\n`;
+		userPrompt += `AUTOCOMPLETEGPT'S SUGGESTED TEXT TO ADD TO END OF CURRENT LINE:\n`;
 	}
 
-	userPrompt += `{"suggestion":"`;
+	if (env.CONSOLE_LOG_LEVEL === "debug") console.log(userPrompt);
 
 	let completionConfig = {
 		model: "gpt-3.5-turbo",
@@ -239,7 +242,6 @@ const generateSuggestion = asyncHandler(async (req, res, next) => {
 		temperature: 0.6,
 		frequency_penalty: 0,
 		presence_penalty: 0,
-		stop: ["}"],
 	};
 
 	// console.log(completionConfig);
@@ -249,11 +251,11 @@ const generateSuggestion = asyncHandler(async (req, res, next) => {
 	let responseText = response.data.choices[0].message.content;
 
 	// if last two charactes are "} then remove them
-	if (responseText.slice(-2) === `"}`) {
-		responseText = responseText.slice(0, -2);
-	} else if (responseText.slice(-1) === `"`) {
-		responseText = responseText.slice(0, -1);
-	}
+	// if (responseText.slice(-2) === `"}`) {
+	// 	responseText = responseText.slice(0, -2);
+	// } else if (responseText.slice(-1) === `"`) {
+	// 	responseText = responseText.slice(0, -1);
+	// }
 
 	if (env.CONSOLE_LOG_LEVEL === "debug") console.log(responseText);
 
