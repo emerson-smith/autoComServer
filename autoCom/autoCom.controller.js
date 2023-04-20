@@ -244,22 +244,67 @@ const generateSuggestion = asyncHandler(async (req, res, next) => {
 		presence_penalty: 0,
 	};
 
-	// console.log(completionConfig);
-	// Create completion
-	const response = await openai.createChatCompletion(completionConfig);
+	if (formData.stream) {
+		completionConfig["stream"] = true;
 
-	let responseText = response.data.choices[0].message.content;
+		try {
+			const openaiRes = await openai.createChatCompletion(completionConfig, { responseType: "stream" });
+			res.setHeader("Content-Type", "text/event-stream");
+			res.setHeader("Cache-Control", "no-cache");
+			res.setHeader("Connection", "keep-alive");
+			openaiRes.data.on("data", (data) => {
+				const lines = data
+					.toString()
+					.split("\n")
+					.filter((line) => line.trim() !== "");
+				for (const line of lines) {
+					const message = line.replace(/^data: /, "");
+					if (message === "[DONE]") {
+						// res.end();
+						return; // Stream finished
+					}
+					try {
+						const parsed = JSON.parse(message);
+						// console.log(parsed.choices[0].delta.content);
+						// send to client in real time
+						res.write(parsed.choices[0].delta.content || "");
+					} catch (error) {
+						console.error("Could not JSON parse stream message", message, error);
+					}
+				}
+			});
+			openaiRes.data.on("end", () => {
+				res.end();
+			});
+		} catch (error) {
+			if (error.response?.status) {
+				console.error(error.response.status, error.message);
+				error.response.data.on("data", (data) => {
+					const message = data.toString();
+					try {
+						const parsed = JSON.parse(message);
+						console.error("An error occurred during OpenAI request: ", parsed);
+					} catch (error) {
+						console.error("An error occurred during OpenAI request: ", message);
+					}
+				});
+			} else {
+				console.error("An error occurred during OpenAI request", error);
+			}
+		}
 
-	// if last two charactes are "} then remove them
-	// if (responseText.slice(-2) === `"}`) {
-	// 	responseText = responseText.slice(0, -2);
-	// } else if (responseText.slice(-1) === `"`) {
-	// 	responseText = responseText.slice(0, -1);
-	// }
+		// res.status(201).json({ responseText: "streaming" });
+	} else {
+		// console.log(completionConfig);
+		// Create completion
+		const response = await openai.createChatCompletion(completionConfig);
 
-	if (env.CONSOLE_LOG_LEVEL === "debug") console.log(responseText);
+		let responseText = response.data.choices[0].message.content;
 
-	res.status(201).json({ responseText });
+		if (env.CONSOLE_LOG_LEVEL === "debug") console.log(responseText);
+
+		res.status(201).json({ responseText });
+	}
 });
 
 module.exports = {
