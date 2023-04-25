@@ -284,16 +284,17 @@ const generateSuggestion = asyncHandler(async (req, res, next) => {
 					try {
 						const parsed = JSON.parse(message);
 						console.error("An error occurred during OpenAI request: ", parsed);
+						res.status(503).json({ error: parsed });
 					} catch (error) {
 						console.error("An error occurred during OpenAI request: ", message);
+						res.status(503).json({ error: message });
 					}
 				});
 			} else {
 				console.error("An error occurred during OpenAI request", error);
+				res.status(503).json({ error });
 			}
 		}
-
-		// res.status(201).json({ responseText: "streaming" });
 	} else {
 		// console.log(completionConfig);
 		// Create completion

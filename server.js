@@ -19,10 +19,10 @@ app.use(
 );
 app.use(express.urlencoded({ extended: true }));
 
-// Enable CORS, allowing localhost and chrome-extension://
+// Enable CORS, allowing all origins
 app.use(
 	cors({
-		origin: ["http://localhost:3000", "chrome-extension://dbpjdckgiaociaogoagpnellakojaabd"],
+		origin: "*",
 
 		// Allow cookies to be sent from the client
 		credentials: true,
